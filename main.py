@@ -85,6 +85,7 @@ carDesign = 3
 winState = 4
 quitGame = 5
 state = menu
+startedalready = False # used to make sure timer doesn't restart in the middle of the game just for going back to the menu
 
 # car design screen, same concept as the state and menu
 carChoice = 0
@@ -94,7 +95,7 @@ gameList = [whiteGame, yellowGame, blueGame]
 
 def drawMenu(screen, mx, my, button, state):
     # responsible for drawing the game menu 
-    global startTime # startTime is used elsewhere in the game, in another function
+    global startTime, startedalready # startTime is used elsewhere in the game, in another function
     screen.fill(gray)
     screen.blit(logo, (242, -125))
 
@@ -134,9 +135,9 @@ def drawMenu(screen, mx, my, button, state):
         if button == 1:
             state = quitGame
 
-    if state == game:
+    if state == game and startedalready == False:
         startTime = pygame.time.get_ticks() # gets the number of milliseconds since the game option has been clicked, used for time tracking and stopwatch later on
-
+        startedalready = True
     return state
 
 def drawDesigncar(screen, button, state, mx, my):
