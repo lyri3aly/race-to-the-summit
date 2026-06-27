@@ -312,7 +312,7 @@ async def main():
     global running, state, mx, my, button
     global carForward, carDown, carLeft, carRight
     global speed, turnSpeed
-    global carAngle, carX, carY
+    global carAngle, carX, carY, startTime, finalTime, startedalready, state
 
     while running:
 
@@ -343,6 +343,11 @@ async def main():
                     carAngle = 0.0
                     speed = 0
                     turnSpeed = 0
+                    # reset timer + game state
+                    startTime = pygame.time.get_ticks()
+                    finalTime = 0
+                    startedalready = False
+                    state = game
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_UP:
