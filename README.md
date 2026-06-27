@@ -16,4 +16,6 @@ This project/game includes:
 - Car physics (acceleration, friction, etc.)
 - Fun camera tracking
 
+* QUIT button doesn't work on the website, only when downloaded as a file
+
 Credits: my computer science teacher!
