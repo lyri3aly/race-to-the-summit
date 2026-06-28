@@ -1,5 +1,6 @@
 import math # used for car movement calculations
 import pygame
+import asyncio
 pygame.init()
 # pygame initialization
 
@@ -28,37 +29,37 @@ finalTime = 0
 
 # image setups
 # logo
-logo = pygame.image.load("images//logo.png")
+logo = pygame.image.load("images/logo.png")
 
 # arrows
-leftarrow = pygame.image.load("images//left arrow.png")
+leftarrow = pygame.image.load("images/left arrow.png")
 leftarrowWidth = int(leftarrow.get_width() / 7)
 leftarrowHeight = int(leftarrow.get_height() / 7)
 leftarrow = pygame.transform.scale(leftarrow, (leftarrowWidth, leftarrowHeight)) # makes sure the arrows are not huge
-rightarrow = pygame.image.load("images//right arrow.png")
+rightarrow = pygame.image.load("images/right arrow.png")
 rightarrowWidth = int(rightarrow.get_width() / 7)
 rightarrowHeight = int(rightarrow.get_height() / 7)
 rightarrow = pygame.transform.scale(rightarrow, (rightarrowWidth, rightarrowHeight))
 
 # win screen
-winScreen = pygame.image.load("images//win screen.png")
+winScreen = pygame.image.load("images/win screen.png")
 
 # helpScreen/instructions screen
-helpScreen = pygame.image.load("images//help.png")
+helpScreen = pygame.image.load("images/help.png")
 
 # road
 roadW, roadH = 5000, 10000
-road = pygame.image.load("images//road.png")
+road = pygame.image.load("images/road.png")
 road = pygame.transform.scale(road, (roadW, roadH))
-noroad = pygame.image.load("images//no road.png")
+noroad = pygame.image.load("images/no road.png")
 noroad = pygame.transform.scale(noroad, (roadW, roadH))
 noroadmask = pygame.mask.from_surface(noroad) # instead of rect, mask goes pixel by pixel and is more accurate for my uneven and irregular roads
 noroadRect = noroad.get_rect() # still get rect to be able to use the x and y variables
 
 # car
-whitePreview = pygame.image.load("images//white car.png")
-yellowPreview = pygame.image.load("images//yellow car.png")
-bluePreview = pygame.image.load("images//blue car.png")
+whitePreview = pygame.image.load("images/white car.png")
+yellowPreview = pygame.image.load("images/yellow car.png")
+bluePreview = pygame.image.load("images/blue car.png")
 carWidth = int(whitePreview.get_width() / 8)
 carHeight = int(whitePreview.get_height() / 8)
 whiteGame = pygame.transform.scale(whitePreview, (carWidth, carHeight))
@@ -115,8 +116,8 @@ def drawMenu(screen, mx, my, button, state):
         blockValue = blockList[i]
         text = pygame.font.SysFont(None, 60).render(textList[i], 1, black)
         textWidth, textHeight = pygame.font.SysFont(None, 60).size(textList[i])
-        textX = blockValue[0] + (blockW - textWidth) // 2
-        textY = blockValue[1] + (blockH - textHeight) // 2
+        textX = blockValue[0] + (blockW - textWidth) / 2
+        textY = blockValue[1] + (blockH - textHeight) / 2
 
         pygame.draw.rect(screen, skyblue, blockValue)
         screen.blit(text, (textX, textY, textWidth, textHeight))
@@ -161,8 +162,8 @@ def drawDesigncar(screen, button, state, mx, my):
     text = font.render("select", True, white)
 
     # centering the text perfectly, I later gave up on thinking too much about math and started finding the coordinates manually
-    textX = selectRect.x + (selectRect.width - text.get_width()) // 2
-    textY = selectRect.y + (selectRect.height - text.get_height()) // 2
+    textX = selectRect.x + (selectRect.width - text.get_width()) / 2
+    textY = selectRect.y + (selectRect.height - text.get_height()) / 2
 
     screen.blit(text, (textX, textY))
 
@@ -250,8 +251,8 @@ def drawGame(button, state):
             speed = 0
 
     # set restraints for the camera to center and fixate on
-    cameraX = int(carCenterX - width // 2)
-    cameraY = int(carCenterY - height // 2)
+    cameraX = int(carCenterX - width / 2)
+    cameraY = int(carCenterY - height / 2)
 
     # use those restraints to define the boundaries of the camera so that the camera is unable to go beyond the map, technically, this wouldn't normally be used either
     cameraX = max(0, min(cameraX, roadW - width))
@@ -307,61 +308,87 @@ turnSpeed = 0
 running = True
 
 mx, my, button = 0, 0, 0
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+async def main():
+    global running, state, mx, my, button
+    global carForward, carDown, carLeft, carRight
+    global speed, turnSpeed
+    global carAngle, carX, carY, startTime, finalTime, startedalready, state
+
+    while running:
+
+        # ---------------- EVENTS ----------------
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = event.pos
+                button = event.button
+
+            if event.type == pygame.MOUSEMOTION:
+                mx, my = event.pos
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    carForward = True
+                if event.key == pygame.K_DOWN:
+                    carDown = True
+                if event.key == pygame.K_LEFT:
+                    carLeft = True
+                if event.key == pygame.K_RIGHT:
+                    carRight = True
+                if event.key == pygame.K_r:
+                    carX = 4850
+                    carY = 19500
+                    carAngle = 0.0
+                    speed = 0
+                    turnSpeed = 0
+                    # reset timer + game state
+                    startTime = pygame.time.get_ticks()
+                    finalTime = 0
+                    startedalready = False
+                    state = game
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_UP:
+                    carForward = False
+                if event.key == pygame.K_DOWN:
+                    carDown = False
+                if event.key == pygame.K_LEFT:
+                    carLeft = False
+                if event.key == pygame.K_RIGHT:
+                    carRight = False
+
+        # ---------------- STATES ----------------
+        if state == menu:
+            state = drawMenu(screen, mx, my, button, state)
+
+        elif state == game:
+            state = drawGame(button, state)
+
+            rotatedCar = pygame.transform.rotate(car, carAngle)
+            boundingbox = rotatedCar.get_rect(
+                center=(carCenterX - cameraX, carCenterY - cameraY)
+            )
+            screen.blit(rotatedCar, boundingbox)
+
+        elif state == helpState:
+            state = drawhelp(screen, mx, my, button, state)
+
+        elif state == carDesign:
+            state = drawDesigncar(screen, button, state, mx, my)
+
+        elif state == winState:
+            state = drawWin(screen, button, state)
+
+        else:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            mx, my = event.pos
-            button = event.button
-        if event.type == pygame.MOUSEMOTION:
-            mx, my = event.pos
-        if event.type == pygame.KEYDOWN: 
-            if event.key == pygame.K_UP:
-                carForward = True
-            if event.key == pygame.K_DOWN:
-                carDown = True
-            if event.key == pygame.K_LEFT:
-                carLeft = True
-            if event.key == pygame.K_RIGHT:
-                carRight = True 
-            if event.key == pygame.K_r:
-                # resets the car's position and timer
-                carX = 4850
-                carY = 19500
-                carAngle = 0.0
-                speed = 0
-                turnSpeed = 0
-                startTime = pygame.time.get_ticks()
-                elapsedTime = 0
-                finalTime = 0
 
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_UP:
-                carForward = False
-            if event.key == pygame.K_DOWN:
-                carDown = False
-            if event.key == pygame.K_LEFT:
-                carLeft = False
-            if event.key == pygame.K_RIGHT:
-                carRight = False
+        pygame.display.flip()
+        button = 0
+        myClock.tick(60)
 
-    # detects states and runs the corresponding function
-    if state == menu:
-        state = drawMenu(screen, mx, my, button, state)
-    elif state == game:
-        state = drawGame(button, state)
-        rotatedCar = pygame.transform.rotate(car, carAngle)
-        boundingbox = rotatedCar.get_rect(center = (carCenterX - cameraX, carCenterY - cameraY))
-        screen.blit(rotatedCar, boundingbox)
-    elif state == helpState:
-        state = drawhelp(screen, mx, my, button, state)
-    elif state == carDesign:
-        state = drawDesigncar(screen, button, state, mx, my)
-    elif state == winState:
-        state = drawWin(screen, button, state)
-    else:
-        running = False
-    pygame.display.flip()
-    button = 0
-    myClock.tick(60)
+        # REQUIRED for pygbag (prevents freeze)
+        await asyncio.sleep(0)
+
+asyncio.run(main())
