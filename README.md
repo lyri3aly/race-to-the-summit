@@ -17,5 +17,6 @@ This project/game includes:
 - Fun camera tracking
 
 * QUIT button doesn't work on the website, only when downloaded as a file
+* It's best to download all files locally as pygbag is transfering some bugs to the web version right now for an unknown reason.
 
 Credits: my computer science teacher!
